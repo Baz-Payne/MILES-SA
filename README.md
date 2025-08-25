@@ -19,3 +19,5 @@ Image here
 
 ## Getting Started
 The two models are self contained. The main file in each allows you to run simulations.
+
+Folders labelled "RAW" contain data directly from AEMO that are unmodified.
