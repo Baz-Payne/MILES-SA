@@ -112,8 +112,6 @@ wind_save_file_sheet_name = 'Wind Save File Names'
 regional_mapping = pd.read_excel(file_path, sheet_name=regional_mapping_sheet_name)
 solar_mapping_table = pd.read_excel(file_path, sheet_name=solar_sheet_name)
 WM_mapping_table = pd.read_excel(file_path, sheet_name=WM_sheet_name)
-
-
 WH_mapping_table = pd.read_excel(file_path, sheet_name=WH_sheet_name)
 solar_save_file_names = pd.read_excel(file_path, sheet_name=solar_save_file_sheet_name)
 wind_save_file_names = pd.read_excel(file_path, sheet_name=wind_save_file_sheet_name)
@@ -244,90 +242,3 @@ for wind_region in wind_save_file_names['Honours Region']:
     save_name = wind_save_file_names.loc[wind_save_file_names['Honours Region'] == wind_region, 'Save File'].iloc[0]
     wind_traces[wind_region].to_csv('Default/' + save_name, index=False)
     
-
-exit()
-### Save The Default Renewable Generation Trace ###
-default_solar_trace = pd.read_csv(save_file_names[0])
-default_wind_trace = pd.read_csv(save_file_names[1])
-
-
-default_renewable_trace = default_solar_trace.copy()
-default_renewable_trace.iloc[:, 1] = default_wind_trace.iloc[:, 1] + default_solar_trace.iloc[:, 1]
-default_renewable_trace.to_csv(default_renewable_trace_save_file, index=False)
-
-### End ###
-
-
-
-### Perform Additional Calculations
-solar_annual_generation = site_capacity.copy()  # copied the site_capacity as its column headings contain the financial years
-solar_annual_generation[:] = 0                  # ensure df is zeroed
-WM_annual_generation = solar_annual_generation.copy()
-WH_annual_generation = solar_annual_generation.copy()
-combined_annual_generation  = solar_annual_generation.copy()         # Add a df to compute the total renewable generation
-
-# Initialise df to store the annual installed capacities of solar and wind
-installed_capacities = pd.DataFrame(columns=['Type'] + site_capacity.columns.tolist())  # copied the site_capacity as its column headings contain the financial years
-installed_capacities = installed_capacities._append({'Type': 'Solar'}, ignore_index=True)
-average_CF = installed_capacities.copy()
-
-installed_capacities = installed_capacities._append({'Type': 'Wind'}, ignore_index=True)
-installed_capacities = installed_capacities._append({'Type': 'Total Renewable'}, ignore_index=True)
-
-
-# Dataframe to store the average CF of solar and wind for each FY
-average_CF = average_CF._append({'Type': 'Wind Medium'}, ignore_index=True)
-average_CF = average_CF._append({'Type': 'Wind High'}, ignore_index=True)
-
-
-
-# Loop through each FY
-for year in range(2025, 2053):
-    
-    start_date, end_date = financial_year_dates(year)
-    
-    solar_FY = total_solar.loc[(total_solar['Datetime'] >= start_date) & (total_solar['Datetime'] <= end_date), total_solar.columns[1:]]
-    WM_FY = total_wind_medium.loc[(total_wind_medium['Datetime'] >= start_date) & (total_wind_medium['Datetime'] <= end_date), total_wind_medium.columns[1:]]
-    WH_FY = total_wind_high.loc[(total_wind_high['Datetime'] >= start_date) & (total_wind_high['Datetime'] <= end_date), total_wind_high.columns[1:]]
-    
-    # Multiply by 0.5 here as we are adding over half hour intervals not hours
-    hh_solar_FY_total = 0.5 * solar_FY.iloc[:, :].sum()
-    hh_WM_FY_total = 0.5 * WM_FY.iloc[:, :].sum()
-    hh_WH_FY_total = 0.5 * WH_FY.iloc[:, :].sum()
-    
-    # Divide to convert to TWh
-    solar_annual_generation.loc[0, year] = hh_solar_FY_total.sum(axis=0) / 10**6 
-    WM_annual_generation.loc[0, year] = hh_WM_FY_total.sum(axis=0) / 10**6
-    WH_annual_generation.loc[0, year] = hh_WH_FY_total.sum(axis=0) / 10**6
-    
-    # Calculate the installed solar and wind capacity for the FY in GW. Note that the amount of wind installed does not change between wind medium and wind high
-    installed_capacities.loc[(installed_capacities['Type'] == 'Solar'), [year]] = solar_mapping_table[year].sum() / 10**3
-    installed_capacities.loc[(installed_capacities['Type'] == 'Wind'), [year]] = WM_mapping_table[year].sum() / 10**3
-    installed_capacities.loc[(installed_capacities['Type'] == 'Total Renewable'), [year]] = installed_capacities.loc[(installed_capacities['Type'] == 'Solar'), [year]].values[0] + installed_capacities.loc[(installed_capacities['Type'] == 'Wind'), [year]].values[0]
-
-    # Hours in the financial year is the difference between the start and end points +24 to account for the end_date starting a midnight on that day
-    hours_in_FY = (end_date - start_date).total_seconds() / 3600 + 24
-    
-    # Calculate the average CF of wind and solar for each FY
-    average_CF.loc[(average_CF['Type'] == 'Solar'), [year]] = solar_annual_generation.loc[0, year] * 10**3 / (installed_capacities.loc[(installed_capacities['Type'] == 'Solar'), [year]].iloc[0,0] * hours_in_FY)
-    average_CF.loc[(average_CF['Type'] == 'Wind Medium'), [year]] = WM_annual_generation.loc[0, year] * 10**3 / (installed_capacities.loc[(installed_capacities['Type'] == 'Wind'), [year]].iloc[0,0] * hours_in_FY)
-    average_CF.loc[(average_CF['Type'] == 'Wind High'), [year]] = WH_annual_generation.loc[0, year] * 10**3 / (installed_capacities.loc[(installed_capacities['Type'] == 'Wind'), [year]].iloc[0,0] * hours_in_FY)
-   
-
-# Combine solar and wind annual generation into a single df
-solar_annual_generation.insert(0, 'Type', 'Solar')
-WM_annual_generation.insert(0, 'Type', 'Wind Medium')
-WH_annual_generation.insert(0, 'Type', 'Wind High')
-annual_generation = pd.concat([solar_annual_generation, WM_annual_generation, WH_annual_generation], ignore_index=True)
-
-
-
-# Save the capacity factors and annual generation to the summary spreadsheet
-with pd.ExcelWriter('Generation Summary.xlsx') as writer:
-    
-    # Write each DataFrame to a separate worksheet
-    annual_site_generation.to_excel(writer, sheet_name='Annual Site Totals TWh', index=False)
-    capacity_factors.to_excel(writer, sheet_name='Site Capacity Factors', index=False)
-    installed_capacities.to_excel(writer, sheet_name='Installed Capacities', index=False)
-    annual_generation.to_excel(writer, sheet_name='Annual Totals TWh', index=False)
-    average_CF.to_excel(writer, sheet_name='Average CF', index=False)
