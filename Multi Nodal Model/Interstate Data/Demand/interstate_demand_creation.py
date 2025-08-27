@@ -1,9 +1,6 @@
 '''
 Important notes about the demand files
     - Demand files are given in half hourly amount in MW which are exclusive of hydrogen demand
-    - Hydrogen demand is given as a yearly total in TWh
-    - The annual hydrogen demand is taken from AEMO electricity and gas website
-    - This script splits the hydrogen demand equally and applies it to each half hour period of a given financial year
 '''
 
 
@@ -103,10 +100,10 @@ def update_raw_date_format(AEMO_df, data_column_name):
 # Generation summary file
 file_path = 'Mapping Tables.xlsx'
 
-# Specify the mapping table sheet and the hydrogen production sheet
+# Specify the mapping table sheet
 NSW_demand_mapping = 'NSW Demand Files'
 
-# Read the in the mapping table and the hydrogen production
+# Read the in the mapping table
 mapping_table = pd.read_excel(file_path, sheet_name=NSW_demand_mapping)
 
 # Get the demand file names
@@ -162,28 +159,3 @@ VIC_total_demand_no_H2 = pd.read_csv(demand_dir + 'VIC_RefYear_4006_STEP_CHANGE_
 VIC_total_demand_no_H2 = update_raw_date_format(VIC_total_demand_no_H2, 'Demand (MW)')
 VIC_total_demand_no_H2 = VIC_total_demand_no_H2[VIC_total_demand_no_H2['Datetime'] < financial_year_dates(2053)[0]]
 VIC_total_demand_no_H2.to_csv('Default/VICStepChangeDemandNoH2.csv', index=False)
-
-
-# Create empty dataframes with the net zero years as the column headings for input totals
-NSW_annual_demand_no_H2 = pd.DataFrame(columns=list(range(2025, 2052)))
-VIC_annual_demand_no_H2 = pd.DataFrame(columns=list(range(2025, 2052)))
-
-# Loop through each financial year and add hydrogen to the entries.
-for year in range(2025, 2053):
-    
-    start_date, end_date = financial_year_dates(year)
-
-     
-    # Add up the demand in each FY both with and without hydrogen
-    demand_FY_NSW_no_H2 = NSW_total_demand_no_H2.loc[(NSW_total_demand_no_H2['Datetime'] >= start_date) & (NSW_total_demand_no_H2['Datetime'] <= end_date), NSW_total_demand_no_H2.columns[1:]]
-    demand_FY_VIC_no_H2 = VIC_total_demand_no_H2.loc[(VIC_total_demand_no_H2['Datetime'] >= start_date) & (VIC_total_demand_no_H2['Datetime'] <= end_date), VIC_total_demand_no_H2.columns[1:]]
-
-    # Multiply by 0.5 here as we are adding over half hour intervals not hours
-    NSW_FY_total = 0.5 * demand_FY_NSW_no_H2.iloc[:, :].sum()
-    VIC_FY_total = 0.5 * demand_FY_VIC_no_H2.iloc[:, :].sum()
-    
-    # Divide to convert to TWh
-    NSW_annual_demand_no_H2.loc[0, year] = NSW_FY_total.sum(axis=0) / 10**6 
-    VIC_annual_demand_no_H2.loc[0, year] = VIC_FY_total.sum(axis=0) / 10**6 
-
-
