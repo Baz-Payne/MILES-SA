@@ -15,10 +15,30 @@ time = ['00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30', 
 # Create a dictionary for renaming columns
 rename_dict = {old_name: new_name for old_name, new_name in zip(half_hours, time)}
 
-# Function to create the start and end dates of a financial year
 def financial_year_dates(year):
-    start_date = datetime(year - 1, 7, 1)  # Financial year starts on July 1st of the previous year
-    end_date = datetime(year, 6, 30, 23, 59)  # Financial year ends on June 30 of the given year
+    '''
+    Returns the start and end dates of a financial year
+
+    Parameters
+    ----------
+    year : int
+        The financial year ending, e.g., FY2024-25 ends in 2025.
+
+    Returns
+    -------
+    start_date : datetime
+        The first day of the financial year.
+    end_date : datetime
+        The last day of the financial year.
+
+    '''
+    
+    # Financial year starts on July 1st of the previous year
+    start_date = datetime(year - 1, 7, 1)
+    
+    # Financial year ends on 30th June, midnight, of the given year
+    end_date = datetime(year, 6, 30, 23, 59)
+    
     return start_date, end_date
 
 
