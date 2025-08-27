@@ -68,9 +68,9 @@ NSW_file_names = NSW_mapping_table['File Name']
 VIC_file_names = VIC_mapping_table['File Name']
 
 # Initialise the directory that the demand files are stored in
-demand_dir = 'Demand Traces/Demand/'
-solar_dir = 'Generation Traces/Solar/'
-wind_dir = 'Generation Traces/Wind/'
+demand_dir = 'Demand/Default/'
+solar_dir = 'Generation/Default/'
+wind_dir = 'Generation/Default/'
 
 
 # Initialise array to store the total net demand
@@ -152,8 +152,8 @@ VIC_demand.iloc[:,1] = VIC_demand.iloc[:,1] + VIC_H2_demand_trace.iloc[:,1]
 NSW_H2_demand_trace.to_csv('H2 Traces/NSWHydrogenDemandTrace.csv', index=False)
 VIC_H2_demand_trace.to_csv('H2 Traces/VICHydrogenDemandTrace.csv', index=False)
 
-NSW_demand.to_csv('Final Traces/NSWStepChangeOperationalDemand.csv', index=False)
-VIC_demand.to_csv('Final Traces/VICStepChangeOperationalDemand.csv', index=False)
+NSW_demand.to_csv('Final Traces/Operational Demand/NSWStepChangeOperationalDemand.csv', index=False)
+VIC_demand.to_csv('Final Traces/Operational Demand/VICStepChangeOperationalDemand.csv', index=False)
 
 
 # Save the net demand traces to be used in the multi nodal model
