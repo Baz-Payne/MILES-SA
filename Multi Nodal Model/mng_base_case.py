@@ -1,5 +1,15 @@
 ### Multi Nodal Grid ###
 
+"""
+The mixed integer linear program (MILP) is complex and can take many hours/day to run.
+To decrease the runtime, remove the binary constraints. While this means the trace data will not be 
+accurate, the overall storage requirement and cost will be the same as the MILP.
+
+Results may vary depending on the solver used. The initial run was completed using Gurobi 11.0.3.
+
+Changing other variables such as the charging/discharging efficiencies to 1 can also reduce complexity.
+"""
+
 ### Note: all trace data is converted to GWs as this decreases computation time ###
 
 import pandas as pd
@@ -92,9 +102,6 @@ for region in sa_regions:
     demand[region] = pd.read_csv(demand_dir + mapping_table.loc[mapping_table['Honours Region'] == region, 'Demand File'].iloc[0])
     demand[region]['Datetime'] = pd.to_datetime(demand[region]['Datetime'])
     demand[region].iloc[:,1] = demand[region].iloc[:,1] / 10**3
-    
-    #generation[region] = pd.read_csv(generation_dir + mapping_table.loc[mapping_table['Honours Region'] == region, 'Generation File'].iloc[0])
-    #generation[region]['Datetime'] = pd.to_datetime(generation[region]['Datetime'])
 
     # Read in the solar generation of the current SA region and convert to GW
     solar_generation[region] = pd.read_csv(generation_dir + mapping_table.loc[mapping_table['Honours Region'] == region, 'Solar Generation File'].iloc[0])
@@ -170,22 +177,12 @@ annual_export = pd.DataFrame(columns=column_headings)
 storage_types = ['shallow', 'medium', 'deep']
 
 # Define the costs of capacity and power. Decreased by a factor of 1e-9 to help with computation time
-#C_e = {storage_types[0]: 330 * 1e3 / 1e-7, storage_types[1]: 209 * 1e3 / 1e-7, storage_types[2]: 171 * 1e3 / 1e-7}
-#C_p = {storage_types[0]: 660 * 1e3 / 1e-7, storage_types[1]: 1672 * 1e3 / 1e-7, storage_types[2]: 4104 * 1e3 / 1e-7}
-
 C_e = {storage_types[0]: 0.33, storage_types[1]: 0.209, storage_types[2]: 0.171}
 C_p = {storage_types[0]: 0.66, storage_types[1]: 1.672, storage_types[2]: 4.104}
-
-#C_e = {storage_types[0]: 1, storage_types[1]: 1, storage_types[2]: 1}
-#C_p = {storage_types[0]: 1, storage_types[1]: 1, storage_types[2]: 1}
         
 # Assume no losses in the charging and discharging
 eta_c = {storage_types[0]: 0.92, storage_types[1]: 0.925, storage_types[2]: 0.92}
 eta_d = {storage_types[0]: 0.92, storage_types[1]: 0.925, storage_types[2]: 0.92}
-
-
-#eta_c = {storage_types[0]: 1, storage_types[1]: 1, storage_types[2]: 1}
-#eta_d = {storage_types[0]: 1, storage_types[1]: 1, storage_types[2]: 1}
 
 # Define the amount of USE
 USE_percent = 0.00002   # 0.002%
@@ -333,11 +330,6 @@ for year in investigation_period:
                         
                         # If so, ensure tranmission is constrained
                         mng += P_I[n, j, t] <= transmission_matrix.loc[n, j]
-                        
-                    #else:
-                        
-                        # Otherwise, there is no connection so ensure no transmission
-                        #mng += P_I[n, j, t] == 0
         
         
             # Add constraint for daily amount of DSP among all regions
@@ -409,12 +401,8 @@ for year in investigation_period:
     
     # Solve the problem
     mng.solve(pulp.GUROBI_CMD(msg=False)) # Change this to your solver of choice
-    #mng.solve(pulp.GUROBI_CMD(msg=False, options=[("MIPGap", 0.001)]))
 
-    #10% was 11,651GWh
-    #1% was 11,651GWh
-    #0.1% was ?
-    #0.01% was unsolved
+
     # End timer
     elapsed_time = time.time() - start_time
     
@@ -427,7 +415,7 @@ for year in investigation_period:
     
     # Calculate system cost in billions
     cost = sum(C_e[b] * 1e9 * pulp.value(E_max[r][b]) + C_p[b] * 1e9 * pulp.value(P_max[r][b]) for r in sa_regions for b in storage_types) / 10**9
-    print("Estimated System Cost: ${:,.0f} billion".format(cost))
+    print("Estimated System Cost: ${:.1f} billion".format(cost))
         
         
     # Print the elapsed time
@@ -664,13 +652,13 @@ for year in investigation_period:
         # Save annual traces to CSV files
         if n in sa_regions:
             for b in storage_types:
-                CY_storage_traces[n][b].to_csv(f'Results/{year}_{n}_{b}_Traces.csv', index=False)
+                CY_storage_traces[n][b].to_csv(f'Base Case Results/{year}_{n}_{b}_Traces.csv', index=False)
             
-        CY_traces[n].to_csv(f'Results/{year}_{n}_Traces.csv', index=False)
-        transmission_flow[n].to_csv(f'Results/{year}_{n}_Xmission_Traces.csv', index=False)
+        CY_traces[n].to_csv(f'Base Case Results/{year}_{n}_Traces.csv', index=False)
+        transmission_flow[n].to_csv(f'Base Case Results/{year}_{n}_Xmission_Traces.csv', index=False)
             
     
 # Save the annual input and output totals
-with pd.ExcelWriter('Results/Annual Totals.xlsx') as writer:
+with pd.ExcelWriter('Base Case Results/Annual Totals.xlsx') as writer:
     annual_input_totals.to_excel(writer, sheet_name='Annual Input Totals', index=False)
     annual_output_totals.to_excel(writer, sheet_name='Annual Output Totals', index=False)
