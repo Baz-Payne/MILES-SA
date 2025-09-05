@@ -1,0 +1,4 @@
+Problems,GLPK,CPLEX,Gurobi,Mosek,PuLP CBC,COIN CLP,SCIP,HiGHS,COPT
+cmflsp50-24-8-8.mps,,,,,,3602.167015314102,,,
+CMS750_4.mps,,,,,,3600.919149160385,,,
+fastxgemm-n2r6s0t2.mps,,,,,,3600.4079003334045,,,

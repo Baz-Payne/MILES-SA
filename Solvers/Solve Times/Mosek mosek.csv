@@ -1,0 +1,11 @@
+Problems,GLPK,CPLEX,Gurobi,Mosek,PuLP CBC,COIN CLP,SCIP,HiGHS,COPT
+bnatt400.mps,,,,Not Solved,,,,,
+bnatt500.mps,,,,Not Solved,,,,,
+bppc4-08.mps,,,,Not Solved,,,,,
+brazil3.mps,,,,Not Solved,,,,,
+buildingenergy.mps,,,,,,,,,
+cbs-cta.mps,,,,8.11165165901184,,,,,
+chromaticindex1024-7.mps,,,,Not Solved,,,,,
+chromaticindex512-7.mps,,,,Not Solved,,,,,
+cmflsp50-24-8-8.mps,,,,Not Solved,,,,,
+CMS750_4.mps,,,,Not Solved,,,,,

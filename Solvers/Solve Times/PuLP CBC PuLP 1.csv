@@ -1,0 +1,12 @@
+Problems,GLPK,CPLEX,Gurobi,Mosek,PuLP CBC,COIN CLP,SCIP,HiGHS,COPT
+drayage-100-23.mps,,,,,10.507210969924927,,,,
+drayage-25-23.mps,,,,,3599.7749049663544,,,,
+dws008-01.mps,,,,,,,,,
+eil33-2.mps,,,,,,,,,
+eilA101-2.mps,,,,,,,,,
+enlight_hard.mps,,,,,,,,,
+ex10.mps,,,,,,,,,
+ex9.mps,,,,,,,,,
+exp-1-500-5-5.mps,,,,,,,,,
+fast0507.mps,,,,,,,,,
+fastxgemm-n2r6s0t2.mps,,,,,,,,,

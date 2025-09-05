@@ -1,0 +1,8 @@
+Problems,GLPK,CPLEX,Gurobi,Mosek,PuLP CBC,COIN CLP,SCIP,HiGHS,COPT
+eilA101-2.mps,,,,,,3603.8945734500885,,,
+enlight_hard.mps,,,,,,196.30679655075073,,,
+ex10.mps,,,,,,,,,
+ex9.mps,,,,,,3149.763274908066,,,
+exp-1-500-5-5.mps,,,,,,3600.924841403961,,,
+fast0507.mps,,,,,,,,,
+fastxgemm-n2r6s0t2.mps,,,,,,,,,

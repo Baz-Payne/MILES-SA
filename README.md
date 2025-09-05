@@ -15,7 +15,7 @@ The islanded copper plate grid model is the idealised version of an electricity 
 ## Multi Nodal Grid
 The multi nodal grid model separates SA into 7 distinct nodes including 3 interconnectors.
 
-Image here
+![SA Split](/Plots/SA_regional_transmission.png)
 
 ## Getting Started
 The two models are self contained. The main file in each allows you to run simulations.

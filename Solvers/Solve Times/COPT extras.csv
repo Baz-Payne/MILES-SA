@@ -1,0 +1,5 @@
+Problems,GLPK,CPLEX,Gurobi,Mosek,PuLP CBC,COIN,SCIP,HiGHS,COPT
+chromaticindex1024-7.mps,,,,,,,,,
+chromaticindex512-7.mps,,,,,,,,,
+cmflsp50-24-8-8.mps,,,,,,,,,1647.597469329834
+CMS750_4.mps,,,,,,,,,51.45599555969238

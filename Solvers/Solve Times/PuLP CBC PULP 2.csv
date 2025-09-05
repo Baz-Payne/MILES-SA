@@ -1,0 +1,10 @@
+Problems,GLPK,CPLEX,Gurobi,Mosek,PuLP CBC,COIN CLP,SCIP,HiGHS,COPT
+dws008-01.mps,,,,,3600.1664052009583,,,,
+eil33-2.mps,,,,,64.05109786987305,,,,
+eilA101-2.mps,,,,,3603.920772790909,,,,
+enlight_hard.mps,,,,,1043.199242591858,,,,
+ex10.mps,,,,,,,,,
+ex9.mps,,,,,Not Solved,,,,
+exp-1-500-5-5.mps,,,,,3600.8981568813324,,,,
+fast0507.mps,,,,,3602.653441429138,,,,
+fastxgemm-n2r6s0t2.mps,,,,,3600.5036051273346,,,,
