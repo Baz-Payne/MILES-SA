@@ -1,4 +1,4 @@
-Datetime,medium SoC (GWh),medium Charge/Disharge (MW)
+Datetime,medium SoC (GWh),medium Charge/Disharge (GW)
 2045-01-01 00:00:00,0.0,0.0
 2045-01-01 00:30:00,0.0,0.0
 2045-01-01 01:00:00,0.0,0.0

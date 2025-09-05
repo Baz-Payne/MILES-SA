@@ -1,4 +1,4 @@
-Datetime,Imports/(Exports) (MW),Net Demand NSW (MW)
+Datetime,Imports/(Exports) (GW),Net Demand NSW (GW)
 2045-01-01 00:00:00,0.0,5.7912239441219855
 2045-01-01 00:30:00,0.0,5.260269041655609
 2045-01-01 01:00:00,0.0,4.81370478783125

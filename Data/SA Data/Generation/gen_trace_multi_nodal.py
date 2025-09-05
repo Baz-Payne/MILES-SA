@@ -142,7 +142,8 @@ for region in wind_save_file_names['Honours Region']:
     
 
 # Create a dataframe to store the total generation trace
-total = template_file.copy()
+total_solar = template_file.copy()
+total_wind = template_file.copy()
 
 # Combine solar and wind mapping tables into a single mapping table to be iterated through
 mapping_tables = [solar_mapping_table, WM_mapping_table]
@@ -211,14 +212,18 @@ for table in mapping_tables:
         if i == 0:
             
             solar_traces[honours_region].iloc[:, 1] = solar_traces[honours_region].iloc[:, 1] + current_site.iloc[:, 1]        
-    
+            
+            # Add the current trace to the total wind trace
+            total_solar.iloc[:, 1] += current_site.iloc[:, 1]
+            
         else:
             
             wind_traces[honours_region].iloc[:, 1] = wind_traces[honours_region].iloc[:, 1] + current_site.iloc[:, 1]
+            
+            # Add the current trace to the total wind trace
+            total_wind.iloc[:, 1] += current_site.iloc[:, 1]
         
-        # Add the current trace to the total trace
-        total.iloc[:, 1] += current_site.iloc[:, 1]
-    
+        
     # Update the iterator as we have completed one mapping table
     i += 1
 
@@ -226,7 +231,8 @@ for table in mapping_tables:
 
 ### Save Combined Files ###
 # Save total generation trace
-total.to_csv('Copper Plate/TotalRenewableGen.csv', index=False)
+total_solar.to_csv('Copper Plate/TotalSolarGen.csv', index=False)
+total_wind.to_csv('Copper Plate/TotalWindGen.csv', index=False)
 
 # Loop through each solar data frame and save them
 for solar_region in solar_save_file_names['Honours Region']:

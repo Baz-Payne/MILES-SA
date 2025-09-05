@@ -215,12 +215,13 @@ storage_types = ['shallow', 'medium', 'deep']
 C_e = {storage_types[0]: 0.33, storage_types[1]: 0.209, storage_types[2]: 0.171}
 C_p = {storage_types[0]: 0.66, storage_types[1]: 1.672, storage_types[2]: 4.104}
         
-# Assume no losses in the charging and discharging
+# Assume losses in the charging and discharging
 eta_c = {storage_types[0]: 0.92, storage_types[1]: 0.925, storage_types[2]: 0.92}
 eta_d = {storage_types[0]: 0.92, storage_types[1]: 0.925, storage_types[2]: 0.92}
 
-# Define the amount of USE
+# Define USE parameters
 USE_percent = 0.00002   # 0.002%
+USE_capacity = 0.3      # 300MW
 
 # Define the minimum SoC percentage allowed for each battery type in each region
 E_min = {}
@@ -299,13 +300,13 @@ for year in investigation_period:
     P_max = {r: {b: pulp.LpVariable(f"P_max_{r}_{b}", lowBound=0) for b in storage_types} for r in sa_regions}
     P_chrg = {r: {b: pulp.LpVariable.dicts(f"P_chrg_{r}_{b}", range(T), lowBound=0) for b in storage_types} for r in sa_regions}
     P_disc = {r: {b: pulp.LpVariable.dicts(f"P_disc_{r}_{b}", range(T), lowBound=0) for b in storage_types} for r in sa_regions}
-    #alpha = {r: {b: pulp.LpVariable.dicts(f"alpha_{r}_{b}", range(T), cat='Binary') for b in storage_types} for r in sa_regions}
+    alpha = {r: {b: pulp.LpVariable.dicts(f"alpha_{r}_{b}", range(T), cat='Binary') for b in storage_types} for r in sa_regions}
     P_I = {(r1, r2, t): pulp.LpVariable(f"P_I_{r1}_{r2}_{t}", lowBound=0) for r1 in all_regions for r2 in all_regions if transmission_matrix.loc[r1, r2] > 0 for t in range(T)}
     P_impt = {s: pulp.LpVariable.dicts(f"P_impt_{s}", range(T), lowBound=0) for s in interstate_regions}
     P_expt = {s: pulp.LpVariable.dicts(f"P_expt_{s}", range(T), lowBound=0) for s in interstate_regions}
     P_curt = {r: pulp.LpVariable.dicts(f"P_curtail_{r}", range(T), lowBound=0) for r in sa_regions}
     P_DSP = {r: pulp.LpVariable.dicts(f"P_DSP_{r}", range(T), lowBound=0, upBound=DSP_capacity) for r in sa_regions}
-    USE = {r: pulp.LpVariable.dicts(f"USE_{r}", range(T), lowBound=0, upBound=0.2) for r in sa_regions}
+    USE = {r: pulp.LpVariable.dicts(f"USE_{r}", range(T), lowBound=0, upBound=USE_capacity) for r in sa_regions}
     
     # Add dispatchable generation variable if option selected
     if dispatchable_generation:
@@ -390,8 +391,8 @@ for year in investigation_period:
                     
                     
                     # Ensure that the battery cannot be charging and discharging at the same time
-                    #mng += P_disc[n][b][t] <= M * alpha[n][b][t]
-                    #mng += P_chrg[n][b][t] <= M * (1 - alpha[n][b][t])
+                    mng += P_disc[n][b][t] <= M * alpha[n][b][t]
+                    mng += P_chrg[n][b][t] <= M * (1 - alpha[n][b][t])
                     
             
             # Otherwise we're at an interstate node

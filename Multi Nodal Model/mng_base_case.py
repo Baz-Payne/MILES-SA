@@ -180,12 +180,13 @@ storage_types = ['shallow', 'medium', 'deep']
 C_e = {storage_types[0]: 0.33, storage_types[1]: 0.209, storage_types[2]: 0.171}
 C_p = {storage_types[0]: 0.66, storage_types[1]: 1.672, storage_types[2]: 4.104}
         
-# Assume no losses in the charging and discharging
+# Assume losses in the charging and discharging
 eta_c = {storage_types[0]: 0.92, storage_types[1]: 0.925, storage_types[2]: 0.92}
 eta_d = {storage_types[0]: 0.92, storage_types[1]: 0.925, storage_types[2]: 0.92}
 
-# Define the amount of USE
+# Define USE parameters
 USE_percent = 0.00002   # 0.002%
+USE_capacity = 0.3      # 300MW
 
 # Define the minimum SoC percentage allowed for each battery type in each region
 E_min = {}
@@ -253,13 +254,13 @@ for year in investigation_period:
     P_max = {r: {b: pulp.LpVariable(f"P_max_{r}_{b}", lowBound=0) for b in storage_types} for r in sa_regions}
     P_chrg = {r: {b: pulp.LpVariable.dicts(f"P_chrg_{r}_{b}", range(T), lowBound=0) for b in storage_types} for r in sa_regions}
     P_disc = {r: {b: pulp.LpVariable.dicts(f"P_disc_{r}_{b}", range(T), lowBound=0) for b in storage_types} for r in sa_regions}
-    #alpha = {r: {b: pulp.LpVariable.dicts(f"alpha_{r}_{b}", range(T), cat='Binary') for b in storage_types} for r in sa_regions}
+    alpha = {r: {b: pulp.LpVariable.dicts(f"alpha_{r}_{b}", range(T), cat='Binary') for b in storage_types} for r in sa_regions}
     P_I = {(r1, r2, t): pulp.LpVariable(f"P_I_{r1}_{r2}_{t}", lowBound=0) for r1 in all_regions for r2 in all_regions if transmission_matrix.loc[r1, r2] > 0 for t in range(T)}
     P_impt = {s: pulp.LpVariable.dicts(f"P_impt_{s}", range(T), lowBound=0) for s in interstate_regions}
     P_expt = {s: pulp.LpVariable.dicts(f"P_expt_{s}", range(T), lowBound=0) for s in interstate_regions}
     P_curt = {r: pulp.LpVariable.dicts(f"P_curtail_{r}", range(T), lowBound=0) for r in sa_regions}
     P_DSP = {r: pulp.LpVariable.dicts(f"P_DSP_{r}", range(T), lowBound=0, upBound=DSP_capacity) for r in sa_regions}
-    USE = {r: pulp.LpVariable.dicts(f"USE_{r}", range(T), lowBound=0, upBound=0.2) for r in sa_regions}
+    USE = {r: pulp.LpVariable.dicts(f"USE_{r}", range(T), lowBound=0, upBound=USE_capacity) for r in sa_regions}
     
     
     ### Define the objective function ###
@@ -304,8 +305,8 @@ for year in investigation_period:
                     
                     
                     # Ensure that the battery cannot be charging and discharging at the same time
-                    #mng += P_disc[n][b][t] <= M * alpha[n][b][t]
-                    #mng += P_chrg[n][b][t] <= M * (1 - alpha[n][b][t])
+                    mng += P_disc[n][b][t] <= M * alpha[n][b][t]
+                    mng += P_chrg[n][b][t] <= M * (1 - alpha[n][b][t])
                     
             
             # Otherwise we're at an interstate node
@@ -458,20 +459,6 @@ for year in investigation_period:
             current_flow = pd.DataFrame({
                 j + ' to ' + n: [(pulp.value(P_I[j, n, t]) - pulp.value(P_I[n, j, t])) for t in range(T)]})
                 
-            '''
-                # Treat the transmission properties different for interstate nodes
-                if (n in interstate_regions) or (j in interstate_regions):
-                    # Create trace for the transmission entering the current node
-                    current_flow = pd.DataFrame({
-                        j + ' to ' + n: [(pulp.value(P_I[j, n, t]) - pulp.value(P_I[n, j, t])) for t in range(T)]})
-                
-                # Otherwise we're at an SA node
-                else:
-                    # Create trace for the transmission entering the current node
-                    current_flow = pd.DataFrame({
-                        j + ' to ' + n: [pulp.value(P_I[j, n, t]) for t in range(T)]})
-            '''
-                
             # Concatenate the current transmission flows to the region flow dataframe
             region_flow = pd.concat([region_flow, current_flow], axis=1)
             
@@ -501,8 +488,8 @@ for year in investigation_period:
             
             CY_traces[n] = pd.DataFrame({
                 'Datetime': D[n].iloc[:,0],
-                'Curtailment (MW)': [pulp.value(P_curt[n][t]) for t in range(T)],
-                'DSP (MW)': [pulp.value(P_DSP[n][t]) for t in range(T)]})
+                'Curtailment (GW)': [pulp.value(P_curt[n][t]) for t in range(T)],
+                'DSP (GW)': [pulp.value(P_DSP[n][t]) for t in range(T)]})
             
             CY_curtailment = sum(pulp.value(P_curt[n][t]) for t in range(T)) * delta_t / 10**3
             annual_curtailment.loc[n, year] = CY_curtailment
@@ -558,7 +545,7 @@ for year in investigation_period:
                 CY_storage_traces[n][b] = pd.DataFrame({
                     'Datetime': D[n].iloc[:,0],
                     b + ' SoC (GWh)': [pulp.value(E[n][b][t]) for t in range(T)],
-                    b + ' Charge/Disharge (MW)': CY_charge_discharge_trace})
+                    b + ' Charge/Disharge (GW)': CY_charge_discharge_trace})
             
         
             
@@ -585,8 +572,8 @@ for year in investigation_period:
                 # Save the trace of the imports and exports
                 CY_traces[n] = pd.DataFrame({
                     'Datetime': D['Adelaide Metro'].iloc[:,0],
-                    'Imports/(Exports) (MW)': import_export_trace,
-                    'Net Demand VIC (MW)': CY_net_demand_VIC.iloc[:,1]})
+                    'Imports/(Exports) (GW)': import_export_trace,
+                    'Net Demand VIC (GW)': CY_net_demand_VIC.iloc[:,1]})
             
             
             elif n == 'Heywood':
@@ -609,8 +596,8 @@ for year in investigation_period:
                 # Save the trace of the imports and exports
                 CY_traces[n] = pd.DataFrame({
                     'Datetime': D['Adelaide Metro'].iloc[:,0],
-                    'Imports/(Exports) (MW)': import_export_trace,
-                    'Net Demand VIC (MW)': CY_net_demand_VIC.iloc[:,1]})
+                    'Imports/(Exports) (GW)': import_export_trace,
+                    'Net Demand VIC (GW)': CY_net_demand_VIC.iloc[:,1]})
                 
                 
             elif n == 'PEC':
@@ -633,8 +620,8 @@ for year in investigation_period:
                 # Save the trace of the imports and exports
                 CY_traces[n] = pd.DataFrame({
                     'Datetime': D['Adelaide Metro'].iloc[:,0],
-                    'Imports/(Exports) (MW)': import_export_trace,
-                    'Net Demand NSW (MW)': CY_net_demand_NSW.iloc[:,1]})
+                    'Imports/(Exports) (GW)': import_export_trace,
+                    'Net Demand NSW (GW)': CY_net_demand_NSW.iloc[:,1]})
             
     
     # Combine the annual input and output totals
